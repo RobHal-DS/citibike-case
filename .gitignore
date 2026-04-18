@@ -1,0 +1,25 @@
+# Data — download via `make data`
+data/raw/
+data/processed/
+
+# Model artifacts
+outputs/models/
+
+# Jupyter
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+.env
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db

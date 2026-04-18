@@ -1,0 +1,20 @@
+[project]
+name = "citibike-axa-case"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "polars>=1.0",
+    "pandas>=2.0",          # required by geopandas
+    "geopandas>=0.14",
+    "shapely>=2.0",
+    "pyarrow>=14.0",
+    "requests>=2.31",
+    "tqdm>=4.66",
+    "scikit-learn>=1.4",
+    "folium>=0.15",
+    "plotly>=5.18",
+    "matplotlib>=3.8",
+    "seaborn>=0.13",
+    "jupyterlab>=4.0",
+    "ipywidgets>=8.0",
+]
