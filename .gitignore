@@ -20,6 +20,9 @@ build/
 .venv/
 venv/
 
+# IDE
+.vscode/
+
 # OS
 .DS_Store
 Thumbs.db
