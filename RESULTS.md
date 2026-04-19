@@ -42,7 +42,7 @@ The 40/40/20 weighting keeps the score cyclist-focused: a station near a busy ro
 
 ![Station risk score distribution](outputs/figures/03_risk_distribution.png)
 
-→ [NB03 — Spatial Analysis](notebooks/03_spatial_analysis.ipynb) · [Interactive station risk map — open in browser](https://htmlpreview.github.io/?https://github.com/RobHal-DS/citibike-case/blob/main/outputs/figures/03_station_risk_map.html)
+→ [NB03 — Spatial Analysis](notebooks/03_spatial_analysis.ipynb) · [Interactive station risk map — open in browser](https://robhal-ds.github.io/citibike-case/outputs/figures/03_station_risk_map.html)
 
 ### Premium Calculation
 
