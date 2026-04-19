@@ -163,7 +163,7 @@ def add_trip_features(trips_df: pl.DataFrame) -> pl.DataFrame:
 
 
 def compute_temporal_multiplier(nypd_bike_df: pl.DataFrame) -> pl.DataFrame:
-    """Compute hour × day-of-week accident risk multiplier from NYPD bike crash data.
+    """Compute hour x day-of-week accident risk multiplier from NYPD bike crash data.
 
     Each (hour, dow) cell gets a multiplier relative to the mean crash count.
     A multiplier of 2.0 means twice the average accident frequency.

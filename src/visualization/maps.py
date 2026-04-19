@@ -37,10 +37,23 @@ def make_risk_map(
         ]
         HeatMap(heat_data, name="NYPD Accident Density", radius=10, blur=15).add_to(m)
 
+    risk_groups = {
+        "Low Risk": folium.FeatureGroup(name="🟢 Low Risk", show=True),
+        "Medium Risk": folium.FeatureGroup(name="🟠 Medium Risk", show=True),
+        "High Risk": folium.FeatureGroup(name="🔴 High Risk", show=True),
+    }
+
     for _, row in stations_gdf.iterrows():
         if row.geometry is None:
             continue
         score = row.get("risk_score", 0)
+        color = risk_color(score, low_threshold, high_threshold)
+        if score < low_threshold:
+            group = risk_groups["Low Risk"]
+        elif score < high_threshold:
+            group = risk_groups["Medium Risk"]
+        else:
+            group = risk_groups["High Risk"]
         tooltip = (
             f"<b>{row.get('name', 'Station')}</b><br>"
             f"Risk Score: {score:.2f}<br>"
@@ -50,11 +63,14 @@ def make_risk_map(
         folium.CircleMarker(
             location=[row.geometry.y, row.geometry.x],
             radius=6 + score * 10,
-            color=risk_color(score, low_threshold, high_threshold),
+            color=color,
             fill=True,
             fill_opacity=0.75,
             tooltip=tooltip,
-        ).add_to(m)
+        ).add_to(group)
 
-    folium.LayerControl().add_to(m)
+    for group in risk_groups.values():
+        group.add_to(m)
+
+    folium.LayerControl(collapsed=False).add_to(m)
     return m

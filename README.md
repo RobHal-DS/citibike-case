@@ -8,7 +8,7 @@ Dynamic per-ride accident insurance for CitiBike, priced by station risk, time o
 ├── notebooks/
 │   ├── 01_eda_citibike.ipynb       # Trip patterns, rider segments
 │   ├── 02_eda_nypd.ipynb           # Accident hotspots, bicycle incidents
-│   ├── 03_spatial_analysis.ipynb   # Station risk scoring + interactive map ← start here
+│   ├── 03_spatial_analysis.ipynb   # Station risk scoring + interactive map
 │   └── 04_risk_model.ipynb         # Formula-based risk model, premium calc, business case
 ├── src/
 │   ├── data/download.py            # Download raw data
@@ -19,6 +19,22 @@ Dynamic per-ride accident insurance for CitiBike, priced by station risk, time o
 ├── RESULTS.md                      # Approach, model, and business case ← start here
 └── pyproject.toml
 ```
+
+## Prerequisites
+
+Install **uv** (manages Python automatically):
+
+**macOS / Linux**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Windows**
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+See the [uv docs](https://docs.astral.sh/uv/getting-started/installation/) for alternative install methods.
 
 ## How to Run
 
@@ -50,7 +66,3 @@ uv run jupyter lab
 ## Dependencies
 
 Python 3.12+. Key packages: `polars`, `geopandas`, `folium`, `plotly`, `seaborn`. See [`pyproject.toml`](pyproject.toml) for full list.
-
-## Author
-
-Robert — AXA Deutschland Data Science Team Lead interview case study, April 2026.

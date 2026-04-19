@@ -1,12 +1,6 @@
 # CitiBike × AXA: Pay-per-Ride Micro-Insurance
 
-A dynamic accident insurance that activates per CitiBike trip, with premiums calculated from actual trip risk — powered by CitiBike trip data and NYPD collision data.
-
----
-
-## The Opportunity
-
-NYC records ~6,700 bicycle-involved crashes per year (NYPD data), yet CitiBike offers no built-in accident coverage. Annual insurance policies don't fit ad-hoc bike-share usage — especially for casual riders (tourists, infrequent users) who have zero coverage. AXA can close this gap with a **pay-per-ride micro-insurance** that activates automatically at trip start, with premiums from $0.50 to $2.00 based on real risk factors.
+CitiBike and AXA can partner to offer CitiBike customers a built-in accident coverage for bike rides. The premium for the coverage is priced dynamically based on an underlying risk model that is supported by historical trip and crash/collision data. 
 
 ## Data
 
@@ -20,11 +14,13 @@ Every trip gets a risk score from three multiplicative factors, each derived fro
 trip_risk = station_risk × temporal_multiplier × rider_multiplier
 ```
 
-### Station Risk
+### Rider Multiplier
 
-Each CitiBike station is scored by the number and severity of NYPD bicycle crashes within a 250m buffer — roughly one minute of riding. The composite score weights accident frequency (how many crashes) and severity (cyclist injuries per crash). This produces a right-skewed distribution: most stations are low-risk, a minority in Manhattan and Brooklyn drive the tail.
+Casual riders take ~50% longer trips than members (median 12.2 min vs. 8.0 min median), meaning more time in traffic and higher exposure per trip. The rider multiplier is each segment's median duration relative to the overall fleet median (8.6 min), yielding a **1.42× multiplier for casual riders** and **0.93× for members** — casual riders pay a proportionally higher premium.
 
-→ [NB03 — Spatial Analysis](notebooks/03_spatial_analysis.ipynb) · [Interactive station risk map](outputs/figures/03_station_risk_map.html)
+![Rider type distribution and trip duration by segment](outputs/figures/01_rider_segments.png)
+
+→ [NB01 — Rider Segments](notebooks/01_eda_citibike.ipynb)
 
 ### Temporal Multiplier
 
@@ -34,13 +30,19 @@ Accident risk varies sharply by time. NYPD data shows a clear peak between 3–6
 
 → [NB02 — NYPD Patterns](notebooks/02_eda_nypd.ipynb)
 
-### Rider Multiplier
+### Station Risk
 
-Casual riders take ~50% longer trips than members (median 12.2 min vs. 8.0 min), meaning more time in traffic and higher exposure per trip. The rider multiplier uses this duration ratio as an exposure proxy — casual riders pay a proportionally higher premium.
+Each CitiBike station is scored using NYPD crash data within a 250m buffer — roughly one minute of riding. The composite score is a weighted sum of three signals, all min-max normalised to [0, 1]:
 
-![Rider type distribution and trip duration by segment](outputs/figures/01_rider_segments.png)
+- **0.4 × bike accident count** — collisions directly involving a bicycle near the station
+- **0.4 × cyclist injuries** — sum of cyclists injured or killed (captures severity)
+- **0.2 × total accident count** — general collision density as a context signal
 
-→ [NB01 — Rider Segments](notebooks/01_eda_citibike.ipynb)
+The 40/40/20 weighting keeps the score cyclist-focused: a station near a busy road with many car crashes but few cycling incidents scores lower than one with frequent bike-on-bike. This produces a right-skewed distribution: most stations are low-risk, a minority in Manhattan and Brooklyn drive the tail.
+
+![Station risk score distribution](outputs/figures/03_risk_distribution.png)
+
+→ [NB03 — Spatial Analysis](notebooks/03_spatial_analysis.ipynb) · [Interactive station risk map — open in browser](https://htmlpreview.github.io/?https://github.com/RobHal-DS/citibike-case/blob/main/outputs/figures/03_station_risk_map.html)
 
 ### Premium Calculation
 
@@ -72,9 +74,23 @@ The heatmap below shows how premiums vary across hour and day-of-week:
 | Combined ratio (incl. admin + rev share) | ~29% |
 | AXA net margin | ~61% |
 
-**Top-down validation:** ~6,700 NYC bike crashes → ~1,300–2,000 involving CitiBike-type riders → ~800 claims at 50% claim rate × $1,500 avg payout = ~$1.2M total loss across ~9.3M trips → **$0.13 expected loss per trip**. The formula handles risk differentiation (who pays more vs. less); the aggregate data sets the price level.
+**Top-down validation:** ~6,700 NYC bike crashes → ~1,300–2,000 involving CitiBike-type riders → ~800 claims at 50% claim rate × $1,500 avg payout (medical + minor liability costs, not full income replacement) = ~$1.2M total loss across ~9.3M trips → **$0.13 expected loss per trip**. The formula handles risk differentiation (who pays more vs. less); the aggregate data sets the price level. The ~10% gap between the 19% loss ratio and the 29% combined ratio covers administration and technology costs.
 
 → [NB04 — Business Case Section](notebooks/04_risk_model.ipynb)
+
+## Model Limitations
+
+The formula is a production-ready baseline, but five structural constraints bound its accuracy:
+
+- **Station-only departure scoring** — The premium is priced at the start station; the actual crash may occur far from where the trip began, on a corridor the departure station does not represent. *Overcome with route-level scoring once GPS trace data is available via a CitiBike app partnership.*
+
+- **Station and time effects treated as independent** — The formula applies the same temporal multiplier to every station equally, so a busy-intersection station (risky only during rush-hour congestion) and a poorly-lit station (risky mainly at night) receive the same time-of-day scaling — only their base score differs. In reality each station's risk profile peaks at different times. *Overcome by training a model that estimates station × time jointly once real claims data is available.*
+
+- **Duration as a crude exposure proxy** — The rider multiplier uses trip length as a stand-in for accident probability but ignores rider skill, e-bike vs. classic bike, and route familiarity. *Overcome by segmenting on bike type (electric vs. classic) and, with telematics, adding speed and braking events as direct risk signals.*
+
+- **No weather or seasonal adjustment** — The temporal multiplier reflects the average 2025 crash distribution by hour and day of week; rain, snow, and seasonal daylight changes all meaningfully alter crash rates. *Overcome by joining trips to an NYC weather API (precipitation flag, temperature) and adding a fourth weather multiplier.*
+
+- **Adverse selection not priced in** — Higher-risk riders (tourists in dense corridors, afternoon casual rides) are more likely to opt in than the assumed 30% average, which could push the actual loss ratio above the modelled 19%. *Overcome by monitoring opt-in rates by station tier and time band during the first 3-month pilot and recalibrating assumptions before full rollout.*
 
 ## Next Steps & Further Considerations
 
