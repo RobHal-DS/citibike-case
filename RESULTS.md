@@ -121,7 +121,8 @@ The formula is a production-ready baseline, but five structural constraints boun
 
 ## Next Steps & Further Considerations
 
-**Path to ML.** A supervised model is feasible via **spatio-temporal proxy labeling**. The idea: join the ~6,700 geocoded + timestamped NYPD crashes against ~9.3M geocoded + timestamped CitiBike trips. Trips that were active near a crash location (≤250m) within a time window (±30 min) are labeled `accident_proximal = 1`; everything else is `0`.
+### Path to ML
+A supervised model is feasible via **spatio-temporal proxy labeling**. The idea: join the ~6,700 geocoded + timestamped NYPD crashes against ~9.3M geocoded + timestamped CitiBike trips. Trips that were active near a crash location (≤250m) within a time window (±30 min) are labeled `accident_proximal = 1`; everything else is `0`.
 
 This label isn't "this rider had an accident" — it's "a real accident happened near where and when this rider was riding." That's noisy, but it's a legitimate exposure proxy. 
 
@@ -139,9 +140,11 @@ A model trained on this target (XGBoost, logistic regression) could capture patt
 
 The formula serves as a production-ready baseline. Once real claims data accumulates (6–12 months post-launch), train a supervised model on actual outcomes and validate whether it outperforms the formula on held-out claims. Every adjuster-corrected auto-assessment also becomes labelled training data for continuous improvement.
 
-**Route-level risk.** Current model scores departure stations. With GPS traces from the CitiBike app, score the actual route — a rider on aprotected bike lane has meaningfully different risk than one on busy streat with high taxi density.
+### Route-level risk
+Current model scores departure stations. With GPS traces from the CitiBike app, score the actual route — a rider on aprotected bike lane has meaningfully different risk than one on busy streat with high taxi density.
 
-**GenAI in Claims.** Four high-leverage applications for the claims lifecycle:
+### GenAI in Claims.
+Four high-leverage applications for the claims lifecycle:
 
 - **FNOL Chatbot** — LLM-guided claim intake in the CitiBike app. Pre-fills trip context (GPS, timestamp), captures injury details in <3 minutes vs. 30-minute call centre average.
 - **Photo Damage Assessment** — Rider uploads damage photos, vision model estimates severity and repair cost. ~65% of low-severity claims (dooring, falls) become eligible for straight-through processing.
