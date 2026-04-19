@@ -20,8 +20,6 @@ Casual riders take ~50% longer trips than members (median 12.2 min vs. 8.0 min m
 
 ![Rider type distribution and trip duration by segment](outputs/figures/01_rider_segments.png)
 
-![Trip volume and duration patterns by hour and day of week](outputs/figures/01_temporal_patterns.png)
-
 → [NB01 — Rider Segments](notebooks/01_eda_citibike.ipynb)
 
 ### Temporal Multiplier
