@@ -143,6 +143,73 @@ def compute_station_risk_scores(
     return result
 
 
+def compute_destination_risk(
+    trips_df: pl.DataFrame,
+    station_risk_df: gpd.GeoDataFrame,
+    local_weight: float = 0.70,
+) -> gpd.GeoDataFrame:
+    """
+    Blend each station's local risk with the mean risk of its trips' end stations.
+
+    For each start station, computes the mean risk_score of all end stations across
+    outgoing trips. This 'destination_risk_score' is blended with the station's own
+    local risk into a new composite 'risk_score'.
+
+    Stations with no outgoing trips fall back to their local score (neutral — no
+    destination information available, score unchanged).
+
+    Args:
+        trips_df: Polars DataFrame with 'start_station_id' and 'end_station_id' columns.
+        station_risk_df: GeoDataFrame from compute_station_risk_scores(), must have
+                         'station_id' and 'risk_score' columns.
+        local_weight: Weight for the station's own local risk (default 0.70).
+                      Destination weight = 1 - local_weight.
+
+    Returns:
+        Copy of station_risk_df with columns added/updated:
+          - local_risk_score: original risk_score (preserved)
+          - destination_risk_score: mean end-station risk across outgoing trips
+          - risk_score: blended composite
+    """
+    dest_weight = 1.0 - local_weight
+
+    risk_lookup = pl.from_pandas(
+        station_risk_df[["station_id", "risk_score"]].reset_index(drop=True)
+    )
+
+    dest_risk = (
+        trips_df
+        .select(["start_station_id", "end_station_id"])
+        .join(
+            risk_lookup.rename({"station_id": "end_station_id", "risk_score": "end_risk"}),
+            on="end_station_id",
+            how="inner",
+        )
+        .group_by("start_station_id")
+        .agg(pl.col("end_risk").mean().alias("destination_risk_score"))
+    )
+
+    result = station_risk_df.copy()
+    result = result.rename(columns={"risk_score": "local_risk_score"})
+    result = result.merge(
+        dest_risk.to_pandas(),
+        left_on="station_id",
+        right_on="start_station_id",
+        how="left",
+    )
+    if "start_station_id" in result.columns:
+        result = result.drop(columns=["start_station_id"])
+
+    result["destination_risk_score"] = result["destination_risk_score"].fillna(
+        result["local_risk_score"]
+    )
+    result["risk_score"] = (
+        local_weight * result["local_risk_score"]
+        + dest_weight * result["destination_risk_score"]
+    )
+    return result
+
+
 def add_trip_features(trips_df: pl.DataFrame) -> pl.DataFrame:
     """Add time features known at ride start to a trips Polars DataFrame."""
     df = trips_df

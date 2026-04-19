@@ -56,7 +56,9 @@ def make_risk_map(
             group = risk_groups["High Risk"]
         tooltip = (
             f"<b>{row.get('name', 'Station')}</b><br>"
-            f"Risk Score: {score:.2f}<br>"
+            f"Risk Score (blended): {score:.2f}<br>"
+            f"Local Risk: {row.get('local_risk_score', score):.2f}<br>"
+            f"Destination Risk: {row.get('destination_risk_score', score):.2f}<br>"
             f"Accidents (250m): {int(row.get('accident_count', 0))}<br>"
             f"Bike Accident Rate: {row.get('bike_accident_rate', 0):.1%}"
         )

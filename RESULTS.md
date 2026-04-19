@@ -32,13 +32,29 @@ Accident risk varies sharply by time. NYPD data shows a clear peak between 3–6
 
 ### Station Risk
 
-Each CitiBike station is scored using NYPD crash data within a 250m buffer — roughly one minute of riding. The composite score is a weighted sum of three signals, all min-max normalised to [0, 1]:
+Each CitiBike station is scored using a two-stage composite that captures both **local accident exposure** and **destination exposure** — the risk profile of where trips from that station typically end.
+
+**Stage 1 — Local Risk (NYPD crash data within 250m)**
+
+A weighted sum of three cyclist-focused signals, all min-max normalised to [0, 1]:
 
 - **0.4 × bike accident count** — collisions directly involving a bicycle near the station
 - **0.4 × cyclist injuries** — sum of cyclists injured or killed (captures severity)
 - **0.2 × total accident count** — general collision density as a context signal
 
-The 40/40/20 weighting keeps the score cyclist-focused: a station near a busy road with many car crashes but few cycling incidents scores lower than one with frequent bike-on-bike. This produces a right-skewed distribution: most stations are low-risk, a minority in Manhattan and Brooklyn drive the tail.
+The 40/40/20 weighting keeps the score cyclist-focused: a station near a busy road with many car crashes but few cycling incidents scores lower than one with frequent bike-on-bike incidents.
+
+**Stage 2 — Destination Risk (mean end-station risk across outgoing trips)**
+
+For each start station, the mean local risk score of all its trips' end stations is computed from the ~9.3M trip dataset. This captures a structural bias the local signal cannot: a calm residential station may see most of its trips end in Midtown Manhattan — one of the highest-risk zones in the network. Without a destination term, such a station would be systematically underpriced. Stations with no recorded outgoing trips fall back to their own local score.
+
+**Blended Score**
+
+```
+risk_score = 0.70 × local_risk_score + 0.30 × destination_risk_score
+```
+
+The 70/30 weighting reflects that the local NYPD signal is the denser, more direct measure of departure-zone hazard, while destination exposure is a meaningful but noisier correction. Both component scores are retained as separate columns for interpretability. This produces a right-skewed distribution: most stations remain low-risk, and the minority in Manhattan and Brooklyn continue to drive the tail — but stations in low-incident areas that feed high-risk destinations are now correctly elevated.
 
 ![Station risk score distribution](outputs/figures/03_risk_distribution.png)
 
@@ -52,9 +68,9 @@ The raw risk score is min-max normalized across all trips and mapped to a premiu
 premium = $0.50 + normalized_risk × $1.50
 ```
 
-- **$0.50 floor** — covers expected loss ($0.13/trip) + admin costs, even for lowest-risk rides
+- **$0.50 floor** — covers expected loss ($0.11/trip) + admin costs, even for lowest-risk rides
 - **$2.00 ceiling** — highest-risk trips (Manhattan, Friday 4 PM, casual rider) carry a meaningful premium, still under half the casual ride price
-- **$0.68 average** — validated against top-down actuarial estimates
+- **$0.73 average** — validated against top-down actuarial estimates
 
 The heatmap below shows how premiums vary across hour and day-of-week:
 
@@ -67,14 +83,25 @@ The heatmap below shows how premiums vary across hour and day-of-week:
 
 | Metric | Value |
 |---|---|
-| Expected loss per trip | $0.13 |
-| Average premium (from risk model) | $0.68 |
-| Gross Written Premium (base case) | ~$573K / year |
-| Loss ratio | ~19% |
-| Combined ratio (incl. admin + rev share) | ~29% |
-| AXA net margin | ~61% |
+| Expected loss per trip | ~$0.11 |
+| Average premium (from risk model) | $0.73 |
+| Gross Written Premium (NYC) | ~$895K / year |
+| Loss ratio | ~16% |
+| Combined ratio (loss + admin expenses) | ~26% |
+| AXA net margin | ~54% |
+| AXA net contribution (NYC) | ~$487K / year |
 
-**Top-down validation:** ~6,700 NYC bike crashes → ~1,300–2,000 involving CitiBike-type riders → ~800 claims at 50% claim rate × $1,500 avg payout (medical + minor liability costs, not full income replacement) = ~$1.2M total loss across ~9.3M trips → **$0.13 expected loss per trip**. The formula handles risk differentiation (who pays more vs. less); the aggregate data sets the price level. The ~10% gap between the 19% loss ratio and the 29% combined ratio covers administration and technology costs.
+**Assumptions:**
+- **NYC bike crashes (2025):** ~6,700 bicycle-involved collisions (NYPD data, NB02)
+- **CitiBike trip share:** 15% of all NYC cycling trips → ~1,005 CitiBike-involved crashes/year
+- **Claim rate:** 70% of CitiBike-involved crashes result in an insurance claim → ~704 claims/year
+- **Avg payout per claim:** $1,500 (ER co-pay + minor liability; not full income replacement)
+- **CitiBike revenue share:** 20% of GWP paid to CitiBike as distribution fee
+- **Admin expense ratio:** 10% of GWP for AXA admin, technology, and compliance costs
+- **Casual opt-in rate:** 30% (tourists and infrequent riders value coverage)
+- **Member opt-in rate:** 10% (frequent riders have lower perceived need)
+
+**Top-down validation:** 6,700 NYC bike crashes × 15% CitiBike share → ~1,005 CitiBike-involved crashes → ~704 claims/year at 70% claim rate × $1,500 avg payout = ~$1.06M total losses across ~9.3M trips → **~$0.11 expected loss per trip**. The combined ratio of ~26% = 16% loss ratio + 10% admin expenses. After paying claims, admin costs, and CitiBike's 20% revenue share, AXA retains ~54% of GWP (~$487K/year).
 
 → [NB04 — Business Case Section](notebooks/04_risk_model.ipynb)
 
@@ -82,15 +109,15 @@ The heatmap below shows how premiums vary across hour and day-of-week:
 
 The formula is a production-ready baseline, but five structural constraints bound its accuracy:
 
-- **Station-only departure scoring** — The premium is priced at the start station; the actual crash may occur far from where the trip began, on a corridor the departure station does not represent. *Overcome with route-level scoring once GPS trace data is available via a CitiBike app partnership.*
+- **Partial departure scoring** — The premium is priced at the start station using both local crash data and the mean risk of that station's trip destinations. This corrects for systematic destination bias (e.g. residential stations feeding Midtown corridors) but does not capture route-level risk along the full trip path. *Fully overcome with route-level scoring once GPS trace data is available via a CitiBike app partnership.*
 
 - **Station and time effects treated as independent** — The formula applies the same temporal multiplier to every station equally, so a busy-intersection station (risky only during rush-hour congestion) and a poorly-lit station (risky mainly at night) receive the same time-of-day scaling — only their base score differs. In reality each station's risk profile peaks at different times. *Overcome by training a model that estimates station × time jointly once real claims data is available.*
 
-- **Duration as a crude exposure proxy** — The rider multiplier uses trip length as a stand-in for accident probability but ignores rider skill, e-bike vs. classic bike, and route familiarity. *Overcome by segmenting on bike type (electric vs. classic) and, with telematics, adding speed and braking events as direct risk signals.*
+- **Duration as a crude exposure proxy** — The rider multiplier uses trip length as a stand-in for accident probability but ignores rider skill, e-bike vs. classic bike, and route familiarity. *Overcome by segmenting on bike type (electric vs. classic) and, if available, member/user data.*
 
 - **No weather or seasonal adjustment** — The temporal multiplier reflects the average 2025 crash distribution by hour and day of week; rain, snow, and seasonal daylight changes all meaningfully alter crash rates. *Overcome by joining trips to an NYC weather API (precipitation flag, temperature) and adding a fourth weather multiplier.*
 
-- **Adverse selection not priced in** — Higher-risk riders (tourists in dense corridors, afternoon casual rides) are more likely to opt in than the assumed 30% average, which could push the actual loss ratio above the modelled 19%. *Overcome by monitoring opt-in rates by station tier and time band during the first 3-month pilot and recalibrating assumptions before full rollout.*
+- **Adverse selection not priced in** — Higher-risk riders (tourists in dense corridors, afternoon casual rides) are more likely to opt in than the assumed 30% average, which could push the actual loss ratio above the modelled 16%. *Overcome by monitoring opt-in rates by station tier and time band during the first 3-month pilot and recalibrating assumptions before full rollout.*
 
 ## Next Steps & Further Considerations
 
@@ -112,7 +139,7 @@ A model trained on this target (XGBoost, logistic regression) could capture patt
 
 The formula serves as a production-ready baseline. Once real claims data accumulates (6–12 months post-launch), train a supervised model on actual outcomes and validate whether it outperforms the formula on held-out claims. Every adjuster-corrected auto-assessment also becomes labelled training data for continuous improvement.
 
-**Route-level risk.** Current model scores departure stations. With GPS traces from the CitiBike app, score the actual route — a rider on 8th Avenue (protected bike lane) has meaningfully different risk than one on 6th Avenue (no lane, high taxi density).
+**Route-level risk.** Current model scores departure stations. With GPS traces from the CitiBike app, score the actual route — a rider on aprotected bike lane has meaningfully different risk than one on busy streat with high taxi density.
 
 **GenAI in Claims.** Four high-leverage applications for the claims lifecycle:
 
@@ -121,4 +148,4 @@ The formula serves as a production-ready baseline. Once real claims data accumul
 - **Document Intelligence** — LLM extracts structured fields from medical reports and repair invoices, replacing manual data entry (8–12 min → <5 sec per document).
 - **GPS Fraud Detection** — Automatic plausibility check: compare reported accident location against actual trip GPS track. A free fraud signal unique to bike-share — traditional insurers don't have trip-level data.
 
-All GenAI components are designed for augmentation with human-in-the-loop oversight, audit trails, and EU AI Act compliance.
+All GenAI components are designed for augmentation with human-in-the-loop oversight, audit trails, and, when rolled out in EU, complient with EU AI Act.
