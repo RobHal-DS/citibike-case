@@ -53,7 +53,7 @@ For each start station, the mean local risk score of all its trips' end stations
 **Blended Score**
 
 ```
-risk_score = 0.70 × local_risk_score + 0.30 × destination_risk_score
+station_risk = 0.70 × local_station_risk_score + 0.30 × destination_station_risk_score
 ```
 
 The 70/30 weighting reflects that the local NYPD signal is the denser, more direct measure of departure-zone hazard, while destination exposure is a meaningful but noisier correction. Both component scores are retained as separate columns for interpretability. This produces a right-skewed distribution: most stations remain low-risk, and the minority in Manhattan and Brooklyn continue to drive the tail — but stations in low-incident areas that feed high-risk destinations are now correctly elevated.
