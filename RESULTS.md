@@ -16,7 +16,7 @@ trip_risk = rider_multiplier × temporal_multiplier × station_risk
 
 ### Rider Multiplier
 
-Casual riders take ~50% longer trips than members (median 12.2 min vs. 8.0 min median), meaning more time in traffic and higher exposure per trip. Moreover, the EDA supports the hypothesis that members use CitiBike mainly to commute to and from work and are therefore more familiar with riding bikes in NYC. In consequence, casual rider should be associated with higher risk.
+Casual riders take ~50% longer trips than members (median 12.2 min vs. 8.0 min median), meaning more time in traffic and higher exposure per trip. Moreover, the EDA supports the hypothesis that members use CitiBike mainly to commute to and from work and are therefore more familiar with riding bikes in NYC. Consequently, casual riders should be associated with higher risk.
 
 The rider multiplier is each segment's median duration relative to the overall fleet median (8.6 min), yielding a **1.42× multiplier for casual riders** and **0.93× for members** — casual riders pay a proportionally higher premium.
 
@@ -143,7 +143,7 @@ A model trained on this target (XGBoost, logistic regression) could capture patt
 The formula serves as a production-ready baseline. Once real claims data accumulates (6–12 months post-launch), train a supervised model on actual outcomes and validate whether it outperforms the formula on held-out claims. Every adjuster-corrected auto-assessment also becomes labelled training data for continuous improvement.
 
 ### Route-level risk
-Current model scores departure stations. With GPS traces from the CitiBike app, score the actual route — a rider on aprotected bike lane has meaningfully different risk than one on busy streat with high taxi density.
+Current model scores departure stations. With GPS traces from the CitiBike app, score the actual route — a rider on a protected bike lane has meaningfully different risk than one on a busy street with high taxi density.
 
 ### GenAI in Claims.
 Four high-leverage applications for the claims lifecycle:
@@ -153,4 +153,4 @@ Four high-leverage applications for the claims lifecycle:
 - **Document Intelligence** — LLM extracts structured fields from medical reports and repair invoices, replacing manual data entry (8–12 min → <5 sec per document).
 - **GPS Fraud Detection** — Automatic plausibility check: compare reported accident location against actual trip GPS track. A free fraud signal unique to bike-share — traditional insurers don't have trip-level data.
 
-All GenAI components are designed for augmentation with human-in-the-loop oversight, audit trails, and, when rolled out in EU, complient with EU AI Act.
+All GenAI components are designed for augmentation with human-in-the-loop oversight, audit trails, and, when rolled out in EU, compliant with EU AI Act.
