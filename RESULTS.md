@@ -70,7 +70,7 @@ The raw risk score is min-max normalized across all trips and mapped to a premiu
 premium = $0.50 + normalized_risk × $1.50
 ```
 
-- **$0.50 floor** — covers expected loss ($0.08/trip) + admin costs, even for lowest-risk rides
+- **$0.50 floor** — covers expected loss ($0.04/trip) + admin costs, even for lowest-risk rides
 - **$2.00 ceiling** — highest-risk trips (Manhattan, Friday 4 PM, casual rider) carry a meaningful premium, still under half the casual ride price
 - **$0.71 average** — validated against top-down actuarial estimates
 
@@ -85,25 +85,25 @@ The heatmap below shows how premiums vary across hour and day-of-week:
 
 | Metric | Value |
 |---|---|
-| Expected loss per trip | ~$0.08 |
+| Expected loss per trip | ~$0.04 |
 | Average premium (from risk model) | $0.71 |
 | Gross Written Premium (NYC) | ~$875K / year |
-| Loss ratio | ~11% |
-| Combined ratio (loss + admin expenses) | ~31% |
-| AXA net margin | ~49% |
-| AXA net contribution (NYC) | ~$425K / year |
+| Loss ratio | ~5% |
+| Combined ratio (loss + admin expenses) | ~38% |
+| AXA net margin | ~42% |
+| AXA net contribution (NYC) | ~$369K / year |
 
 **Assumptions:**
 - **NYC bike crashes (2025):** ~6,700 bicycle-involved collisions (NYPD data, NB02)
-- **CitiBike trip share:** 15% of all NYC cycling trips → ~1,005 CitiBike-involved crashes/year
-- **Claim rate:** 50% of CitiBike-involved crashes result in an insurance claim → ~502 claims/year
-- **Avg payout per claim:** $1,500 (ER co-pay + minor liability; not full income replacement)
+- **CitiBike trip share:** 10% of all NYC cycling trips → ~670 CitiBike-involved crashes/year
+- **Claim rate:** 25% of CitiBike-involved crashes result in an insurance claim → ~168 claims/year
+- **Avg payout per claim:** $2,000 fixed accident benefit (lump-sum cash payment, not cost reimbursement)
 - **CitiBike revenue share:** 20% of GWP paid to CitiBike as distribution fee
-- **Admin expense ratio:** 20% of GWP for AXA admin, technology, and compliance costs
+- **Admin expenses:** $200K fixed/year (data scientist, infrastructure, compliance) + 10% of GWP variable
 - **Casual opt-in rate:** 30% (tourists and infrequent riders value coverage)
 - **Member opt-in rate:** 10% (frequent riders have lower perceived need)
 
-**Top-down validation:** 6,700 NYC bike crashes × 15% CitiBike share → ~1,005 CitiBike-involved crashes → ~502 claims/year at 50% claim rate × $1,500 avg payout = ~$0.75M total losses across ~9.3M trips → **~$0.08 expected loss per trip**. The combined ratio of ~31% = 11% loss ratio + 20% admin expenses. After paying claims, admin costs, and CitiBike's 20% revenue share, AXA retains ~49% of GWP (~$425K/year).
+**Top-down validation:** 6,700 NYC bike crashes × 10% CitiBike share → ~670 CitiBike-involved crashes → ~168 claims/year at 25% claim rate × $2,000 avg payout = ~$335K total losses across ~9.3M trips → **~$0.04 expected loss per trip**. The combined ratio of ~38% = 5% loss ratio + 33% admin expenses ($200K fixed + 10% variable). After paying claims, admin costs, and CitiBike's 20% revenue share, AXA retains ~42% of GWP (~$369K/year).
 
 → [NB04 — Business Case Section](notebooks/04_risk_model.ipynb)
 
