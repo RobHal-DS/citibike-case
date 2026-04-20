@@ -163,9 +163,9 @@ All GenAI components are designed for augmentation with human-in-the-loop oversi
 
 | Figure | Description |
 |---|---|
-| [CitiBike Station Density Map](outputs/figures/01_station_density_map.html) | All 2,236 stations across NYC, circles sized by annual trip volume — shows the dense Manhattan/Brooklyn core vs. outer-borough coverage |
-| [Top 20 Stations by Trip Volume](outputs/figures/01_top_stations.html) | Interactive bar chart of the highest-volume start stations |
-| [NYC Bike Accident Heatmap](outputs/figures/02_bike_accident_heatmap.html) | Folium heatmap of all 6,700 bicycle-involved NYPD collisions in 2025 — concentration in Midtown and Downtown Manhattan |
+| [CitiBike Station Density Map](https://robhal-ds.github.io/citibike-case/outputs/figures/01_station_density_map.html) | All 2,236 stations across NYC, circles sized by annual trip volume — shows the dense Manhattan/Brooklyn core vs. outer-borough coverage |
+| [Top 20 Stations by Trip Volume](https://robhal-ds.github.io/citibike-case/outputs/figures/01_top_stations.html) | Interactive bar chart of the highest-volume start stations |
+| [NYC Bike Accident Heatmap](https://robhal-ds.github.io/citibike-case/outputs/figures/02_bike_accident_heatmap.html) | Folium heatmap of all 6,700 bicycle-involved NYPD collisions in 2025 — concentration in Midtown and Downtown Manhattan |
 | [Station Risk Map](https://robhal-ds.github.io/citibike-case/outputs/figures/03_station_risk_map.html) | Color-coded risk scores (green → red) for every CitiBike station, with NYPD crash overlay — the primary pricing artefact |
 
 ### Additional Static Plots
