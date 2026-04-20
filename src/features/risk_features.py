@@ -44,6 +44,7 @@ def compute_station_risk_scores(
     stations_gdf: gpd.GeoDataFrame,
     accidents_gdf: gpd.GeoDataFrame,
     buffer_m: float = 250.0,
+    station_risk_floor: float = 0.10,
 ) -> gpd.GeoDataFrame:
     """
     For each station, count NYPD accidents within `buffer_m` meters.
@@ -58,7 +59,9 @@ def compute_station_risk_scores(
       - bike_severity: cyclist injuries per bike accident (0 if none)
       - severity_score: all injuries per accident (kept for reference)
       - bike_accident_rate: bike accidents / total accidents
-      - risk_score: normalised composite score [0, 1]
+      - risk_score: weighted composite of per-component min-max normalised scores,
+                   clipped to [station_risk_floor, 1]. The floor ensures temporal
+                   and rider multipliers remain effective even at zero-accident stations.
     """
     # Reproject to a meter-based CRS for accurate buffering
     stations_m = stations_gdf.to_crs("EPSG:3857")
@@ -129,16 +132,19 @@ def compute_station_risk_scores(
         0,
     )
 
-    # Composite risk: bike-focused weighted sum, min-max normalized to [0, 1]
-    # Weights reflect that for a per-ride bike insurance, cyclist-specific
-    # metrics matter most, with general accident density as context signal.
-    raw = (
-        0.4 * result["bike_accident_count"]
-        + 0.4 * result["cyclist_injuries"]
-        + 0.2 * result["accident_count"]
-    )
-    rmin, rmax = raw.min(), raw.max()
-    result["risk_score"] = (raw - rmin) / (rmax - rmin) if rmax > rmin else 0.0
+    # Composite risk: each component is min-max normalised to [0, 1] first so that
+    # the 40/40/20 weights apply to normalised dimensions, not raw counts.
+    # (accident_count is structurally ~10× larger than bike_accident_count; normalising
+    # first prevents it from dominating the weighted sum despite its lower weight.)
+    def _minmax(s):
+        lo, hi = s.min(), s.max()
+        return (s - lo) / (hi - lo) if hi > lo else s * 0.0
+
+    result["risk_score"] = (
+        0.4 * _minmax(result["bike_accident_count"])
+        + 0.4 * _minmax(result["cyclist_injuries"])
+        + 0.2 * _minmax(result["accident_count"])
+    ).clip(lower=station_risk_floor)
 
     return result
 
