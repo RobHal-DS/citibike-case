@@ -89,7 +89,7 @@ The heatmap below shows how premiums vary across hour and day-of-week:
 
 Combining data inputs from the analysis with a few assumptions, we can briefly sketch whether the product would be commercially viable.
 
-**Data inputs** (measured from the analysis):
+**Data inputs**:
 - **NYC bicycle-involved crashes (2025):** 6,700 collisions — NYPD Motor Vehicle Collisions dataset (NB02)
 - **Cyclists injured (2025):** 5,133 — NYPD data (NB02)
 - **Total CitiBike trips (2025):** ~9.3M — CitiBike trip data (NB01)
@@ -97,7 +97,7 @@ Combining data inputs from the analysis with a few assumptions, we can briefly s
 - **Average premium:** $0.71/ride — calculated by the risk model (NB04)
 - **Premium range:** $0.50–$2.00 — risk model output (NB04)
 
-**Model assumptions** (proxies without direct data):
+**Assumptions**:
 - **CitiBike share of NYC cycling:** 10% of all NYC cycling trips → ~670 CitiBike-involved crashes/year
 - **Claim rate:** 50% of CitiBike-involved crashes produce a paid claim → ~335 claims/year
 - **Avg payout per claim:** $5,000 fixed lump-sum cash benefit (complementary to health coverage, not a replacement)
