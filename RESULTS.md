@@ -18,7 +18,7 @@ trip_risk = rider_multiplier × temporal_multiplier × station_risk
 
 Casual riders take ~50% longer trips than members (median 12.2 min vs. 8.0 min median), meaning more time in traffic and higher exposure per trip. Moreover, the EDA supports the hypothesis that members use CitiBike mainly to commute to and from work and are therefore more familiar with riding bikes in NYC. Consequently, casual riders should be associated with higher risk.
 
-The rider multiplier is each segment's median duration relative to the overall fleet median (8.6 min), yielding a **1.42× multiplier for casual riders** and **0.93× for members** — casual riders pay a proportionally higher premium.
+The rider multiplier is each segment's median duration relative to the overall fleet median (8.5 min), yielding a **1.43× multiplier for casual riders** and **0.94× for members** — casual riders pay a proportionally higher premium.
 
 ![Rider type distribution and trip duration by segment](outputs/figures/01_rider_segments.png)
 
@@ -44,7 +44,7 @@ A weighted sum of three cyclist-focused signals, all min-max normalised to [0, 1
 - **0.4 × cyclist injuries** — sum of cyclists injured or killed (captures severity)
 - **0.2 × total accident count** — general collision density as a context signal
 
-The 40/40/20 weighting keeps the score cyclist-focused: a station near a busy road with many car crashes but few cycling incidents scores lower than one with frequent bike-on-bike incidents.
+The 40/40/20 weighting keeps the score cyclist-focused: a station near a busy road with many car crashes but few cycling incidents scores lower than one with frequent bicycle incidents.
 
 **Stage 2 — Destination Risk (mean end-station risk across outgoing trips)**
 
@@ -70,7 +70,7 @@ The raw risk score is min-max normalized across all trips and mapped to a premiu
 premium = $0.50 + normalized_risk × $1.50
 ```
 
-- **$0.50 floor** — covers expected loss ($0.04/trip) + admin costs, even for lowest-risk rides
+- **$0.50 floor** — covers expected loss ($0.18/trip) + admin costs, even for lowest-risk rides
 - **$2.00 ceiling** — highest-risk trips (Manhattan, Friday 4 PM, casual rider) carry a meaningful premium, still under half the casual ride price
 - **$0.71 average** — validated against top-down actuarial estimates
 
@@ -81,31 +81,40 @@ The heatmap below shows how premiums vary across hour and day-of-week:
 → [NB04 — Risk Model & Premium Calculator](notebooks/04_risk_model.ipynb)
 
 
-## Business Case
+## Commercial Viability Sketch
+
+Combining data inputs from the analysis with a few assumptions, we can briefly sketch whether the product would be commercially viable.
+
+**Data inputs** (measured from the analysis):
+- **NYC bicycle-involved crashes (2025):** 6,700 collisions — NYPD Motor Vehicle Collisions dataset (NB02)
+- **Cyclists injured (2025):** 5,133 — NYPD data (NB02)
+- **Total CitiBike trips (2025):** ~9.3M — CitiBike trip data (NB01)
+- **Casual rider share:** 16.3% of trips (1.5M rides) — CitiBike trip data (NB01)
+- **Average premium:** $0.71/ride — calculated by the risk model (NB04)
+- **Premium range:** $0.50–$2.00 — risk model output (NB04)
+
+**Model assumptions** (proxies without direct data):
+- **CitiBike share of NYC cycling:** 10% of all NYC cycling trips → ~670 CitiBike-involved crashes/year
+- **Claim rate:** 50% of CitiBike-involved crashes produce a paid claim → ~335 claims/year
+- **Avg payout per claim:** $5,000 fixed lump-sum cash benefit (complementary to health coverage, not a replacement)
+- **CitiBike revenue share:** 20% of GWP as distribution fee
+- **Admin expenses:** $200K fixed/year + 10% of GWP variable
+- **Casual opt-in rate:** 30% (tourists and infrequent riders value per-ride coverage)
+- **Member opt-in rate:** 10% (frequent commuters have lower perceived need)
+
+**Derivation:** 6,700 crashes × 10% CitiBike share → ~670 CitiBike-involved crashes → ~335 claims/year at 50% claim rate × $5,000 payout = ~$1.675M total losses across ~9.3M trips → ~$0.18 expected loss per trip. Combined ratio of ~58% = 25% loss ratio + 33% admin load ($200K fixed + 10% variable). After claims, admin, and CitiBike's 20% revenue share, AXA retains ~22% of GWP (~$191K/year).
 
 | Metric | Value |
 |---|---|
-| Expected loss per trip | ~$0.07 |
+| Expected loss per trip | ~$0.18 |
 | Average premium (from risk model) | $0.71 |
 | Gross Written Premium (NYC) | ~$875K / year |
-| Loss ratio | ~10% |
-| Combined ratio (loss + admin expenses) | ~43% |
-| AXA net margin | ~37% |
-| AXA net contribution (NYC) | ~$324K / year |
+| Loss ratio | ~25% |
+| Combined ratio (loss + admin expenses) | ~58% |
+| AXA net margin | ~22% |
+| AXA net contribution (NYC) | ~$191K / year |
 
-**Assumptions:**
-- **NYC bike crashes (2025):** ~6,700 bicycle-involved collisions (NYPD data, NB02)
-- **CitiBike trip share:** 10% of all NYC cycling trips → ~670 CitiBike-involved crashes/year
-- **Claim rate:** 50% of CitiBike-involved crashes result in an insurance claim → ~335 claims/year
-- **Avg payout per claim:** $2,000 fixed accident benefit (lump-sum cash payment, not cost reimbursement)
-- **CitiBike revenue share:** 20% of GWP paid to CitiBike as distribution fee
-- **Admin expenses:** $200K fixed/year (data scientist, infrastructure, compliance) + 10% of GWP variable
-- **Casual opt-in rate:** 30% (tourists and infrequent riders value coverage)
-- **Member opt-in rate:** 10% (frequent riders have lower perceived need)
-
-**Top-down validation:** 6,700 NYC bike crashes × 10% CitiBike share → ~670 CitiBike-involved crashes → ~335 claims/year at 50% claim rate × $2,000 avg payout = ~$670K total losses across ~9.3M trips → **~$0.07 expected loss per trip**. The combined ratio of ~43% = 10% loss ratio + 33% admin expenses ($200K fixed + 10% variable). After paying claims, admin costs, and CitiBike's 20% revenue share, AXA retains ~37% of GWP (~$324K/year).
-
-→ [NB04 — Business Case Section](notebooks/04_risk_model.ipynb)
+→ [NB04 — Commercial Viability Sketch](notebooks/04_risk_model.ipynb)
 
 ## Model Limitations
 
@@ -119,7 +128,7 @@ The formula is a production-ready baseline, but five structural constraints boun
 
 - **No weather or seasonal adjustment** — The temporal multiplier reflects the average 2025 crash distribution by hour and day of week; rain, snow, and seasonal daylight changes all meaningfully alter crash rates. *Overcome by joining trips to an NYC weather API (precipitation flag, temperature) and adding a fourth weather multiplier.*
 
-- **Adverse selection not priced in** — Higher-risk riders (tourists in dense corridors, afternoon casual rides) are more likely to opt in than the assumed 30% average, which could push the actual loss ratio above the modelled 10%. *Overcome by monitoring opt-in rates by station tier and time band during the first 3-month pilot and recalibrating assumptions before full rollout.*
+- **Adverse selection not priced in** — Higher-risk riders (tourists in dense corridors, afternoon casual rides) are more likely to opt in than the assumed 30% average, which could push the actual loss ratio above the modelled 25%. *Overcome by monitoring opt-in rates by station tier and time band during the first 3-month pilot and recalibrating assumptions before full rollout.*
 
 ## Next Steps & Further Considerations
 
@@ -130,7 +139,7 @@ This label isn't "this rider had an accident" — it's "a real accident happened
 
 A model trained on this target (XGBoost, logistic regression) could capture patterns the formula cannot:
 - **Interactions** — a specific station may be dangerous only during rush hour, not uniformly
-- **Seasonality** — summer vs. winter crash patterns per station -> increase data to cover years before 2025.
+- **Seasonality** — summer vs. winter crash patterns per station — increase data to cover years before 2025 to capture stable annual patterns.
 - **Non-linear effects** — risk may not scale linearly with raw accident count
 - **Temporal granularity** — date-level variation instead of year-aggregated multipliers
 
@@ -145,7 +154,7 @@ The formula serves as a production-ready baseline. Once real claims data accumul
 ### Route-level risk
 Current model scores departure stations. With GPS traces from the CitiBike app, score the actual route — a rider on a protected bike lane has meaningfully different risk than one on a busy street with high taxi density.
 
-### GenAI in Claims.
+### GenAI in Claims
 Four high-leverage applications for the claims lifecycle:
 
 - **FNOL Chatbot** — LLM-guided claim intake in the CitiBike app. Pre-fills trip context (GPS, timestamp), captures injury details in <3 minutes vs. 30-minute call centre average.
@@ -169,13 +178,13 @@ All GenAI components are designed for augmentation with human-in-the-loop oversi
 
 ### Additional Static Plots
 
-**Trip timing by rider segment** — members show a clear commute double-peak (8 AM / 5–6 PM) while casual riders peak mid-afternoon; both segments drop sharply in August (data gap) and are almost absent in winter months.
+**Trip timing by rider segment** — members show a clear commute double-peak (8 AM / 5–6 PM) while casual riders peak mid-afternoon; both segments show seasonal dips in February and August and are almost absent in winter months.
 
 ![Trip distribution by hour, day of week, and month](outputs/figures/01_temporal_patterns.png)
 
 → [NB01 — CitiBike EDA](notebooks/01_eda_citibike.ipynb)
 
-**Rider multiplier derivation** — casual median trip is 12 min vs. 8 min for members (fleet median: 9 min), yielding a ×1.43 multiplier for casual and ×0.94 for members.
+**Rider multiplier derivation** — casual median trip is 12.2 min vs. 8.0 min for members (fleet median: 8.5 min), yielding a ×1.43 multiplier for casual and ×0.94 for members.
 
 ![Trip duration KDE and rider multiplier bar chart](outputs/figures/04_rider_multiplier.png)
 
