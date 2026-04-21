@@ -44,6 +44,10 @@ A weighted sum of three cyclist-focused signals, all min-max normalised to [0, 1
 - **0.4 × cyclist injuries** — sum of cyclists injured or killed (captures severity)
 - **0.2 × total accident count** — general collision density as a context signal
 
+```
+local_station_risk_score = 0.4 × bike_accicent_count + 0.4 × cyclist_injuries + 0.2 * total_accident_count
+```
+
 The 40/40/20 weighting keeps the score cyclist-focused: a station near a busy road with many car crashes but few cycling incidents scores lower than one with frequent bicycle incidents.
 
 **Stage 2 — Destination Risk (mean end-station risk across outgoing trips)**
@@ -53,7 +57,7 @@ For each start station, the mean local risk score of all its trips' end stations
 **Blended Score**
 
 ```
-station_risk = 0.70 × local_station_risk_score + 0.30 × destination_station_risk_score
+station_risk = 0.70 × local_start_station_risk_score + 0.30 × local_destination_station_risk_score
 ```
 
 The 70/30 weighting reflects that the local NYPD signal is the denser, more direct measure of departure-zone hazard, while destination exposure is a meaningful but noisier correction. Both component scores are retained as separate columns for interpretability. This produces a right-skewed distribution: most stations remain low-risk, and the minority in Manhattan and Brooklyn continue to drive the tail — but stations in low-incident areas that feed high-risk destinations are now correctly elevated.
