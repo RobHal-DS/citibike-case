@@ -136,7 +136,7 @@ The formula is a production-ready baseline, but five structural constraints boun
 
 ## Next Steps & Further Considerations
 
-### Path to ML
+### Path to Machine Learning
 With the given data, a supervised model is feasible via **spatio-temporal proxy labeling**. The idea: join the ~6,700 geocoded + timestamped NYPD crashes against ~9.3M geocoded + timestamped CitiBike trips. Trips that were active near a crash location (≤250m) within a time window (±30 min) are labeled `accident_proximal = 1`; everything else is `0`.
 
 This label isn't "this rider had an accident" — it's "a real accident happened near where and when this rider was riding." That's noisy, but it's a legitimate exposure proxy. 
