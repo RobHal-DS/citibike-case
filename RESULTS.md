@@ -40,9 +40,9 @@ Each CitiBike station is scored using a two-stage composite that captures both *
 
 A weighted sum of three cyclist-focused signals, all min-max normalised to [0, 1]:
 
-- **0.4 × bike accident count** — collisions directly involving a bicycle near the station
-- **0.4 × cyclist injuries** — sum of cyclists injured or killed (captures severity)
-- **0.2 × total accident count** — general collision density as a context signal
+- **bike accident count** — collisions directly involving a bicycle near the station
+- **cyclist injuries** — sum of cyclists injured or killed (captures severity)
+- **total accident count** — general collision density as a context signal
 
 ```
 local_station_risk_score = 0.4 × bike_accicent_count + 0.4 × cyclist_injuries + 0.2 * total_accident_count
@@ -137,7 +137,7 @@ The formula is a production-ready baseline, but five structural constraints boun
 ## Next Steps & Further Considerations
 
 ### Path to ML
-A supervised model is feasible via **spatio-temporal proxy labeling**. The idea: join the ~6,700 geocoded + timestamped NYPD crashes against ~9.3M geocoded + timestamped CitiBike trips. Trips that were active near a crash location (≤250m) within a time window (±30 min) are labeled `accident_proximal = 1`; everything else is `0`.
+With the given data, a supervised model is feasible via **spatio-temporal proxy labeling**. The idea: join the ~6,700 geocoded + timestamped NYPD crashes against ~9.3M geocoded + timestamped CitiBike trips. Trips that were active near a crash location (≤250m) within a time window (±30 min) are labeled `accident_proximal = 1`; everything else is `0`.
 
 This label isn't "this rider had an accident" — it's "a real accident happened near where and when this rider was riding." That's noisy, but it's a legitimate exposure proxy. 
 
@@ -151,12 +151,9 @@ A model trained on this target (XGBoost, logistic regression) could capture patt
 - **Class imbalance** — <0.1% positive rate (6,700 in 9.3M) requires careful calibration, and the lift over the formula may be marginal
 - **Ecological label** — "a crash happened nearby" ≠ "this rider crashed," so the signal-to-noise ratio is low
 - **Validation gap** — without real claims, we can't measure whether the ML model actually prices risk better
-- **Explainability** — a formula premium decomposes into 3 transparent factors; XGBoost requires SHAP for regulatory compliance (EU AI Act Art. 13)
+- **Explainability** — a formula premium decomposes into 3 transparent factors; XGBoost requires SHAP for explainabilty.
 
 The formula serves as a production-ready baseline. Once real claims data accumulates (6–12 months post-launch), train a supervised model on actual outcomes and validate whether it outperforms the formula on held-out claims. Every adjuster-corrected auto-assessment also becomes labelled training data for continuous improvement.
-
-### Route-level risk
-Current model scores departure stations. With GPS traces from the CitiBike app, score the actual route — a rider on a protected bike lane has meaningfully different risk than one on a busy street with high taxi density.
 
 ### GenAI in Claims
 Four high-leverage applications for the claims lifecycle:
